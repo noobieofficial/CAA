@@ -115,20 +115,21 @@
     }
 
     @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
+        .container {
+            flex-direction: column-reverse; /* input sopra, immagini sotto */
+        }
 
-      .left, .right {
-        flex: unset;
-        width: 100%;
-        padding: 20px;
-      }
+        .left, .right {
+            flex: unset;
+            width: 100%;
+            padding: 20px;
+        }
 
-      .left h1 {
-        font-size: 28px;
-      }
+        .left h1 {
+            font-size: 28px;
+        }
     }
+
   </style>
 </head>
 <body>
