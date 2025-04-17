@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Visualizzatore CAA</title>
   <style>
-    * {
+* {
   box-sizing: border-box;
 }
 
@@ -115,70 +115,96 @@ body {
   align-items: center;
 }
 
-/* --- VERSIONE MOBILE --- */
+#print-button {
+      display: none;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+
+    #print-button:hover {
+      background-color: #218838;
+    }
+
+
+/* MOBILE */
 @media (max-width: 768px) {
-  body {
-    padding: 0;
-    height: auto;
-    display: block;
-  }
+      body {
+        padding: 0;
+      }
 
-  .container {
-    flex-direction: column;
-    border-radius: 0;
-    box-shadow: none;
-    width: 100%;
-  }
+      .container {
+        flex-direction: column;
+        border-radius: 0;
+        box-shadow: none;
+        width: 100%;
+      }
 
-  .left {
-    padding: 24px 20px;
-    background: #ffffff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
+      .left {
+        padding: 24px 20px;
+        background: #ffffff;
+      }
 
-  .left h1 {
-    font-size: 26px;
-    margin-bottom: 8px;
-    text-align: center;
-  }
+      .left h1 {
+        font-size: 26px;
+        text-align: center;
+      }
 
-  .left p {
-    font-size: 16px;
-    text-align: center;
-    margin-bottom: 16px;
-  }
+      .left p {
+        font-size: 16px;
+        text-align: center;
+      }
 
-  .left input {
-    padding: 12px;
-    font-size: 16px;
-    margin-bottom: 16px;
-  }
+      .left input {
+        padding: 12px;
+        font-size: 16px;
+      }
 
-  .left button {
-    padding: 12px;
-    width: 100%;
-    font-size: 16px;
-  }
+      .left button {
+        padding: 12px;
+        width: 100%;
+      }
 
-  .right {
-    padding: 20px 16px 40px;
-    background-color: #f0f4ff;
-  }
+      .right {
+        padding: 20px 16px 40px;
+      }
 
-  #image-container {
-    gap: 16px;
-  }
+      #image-container img {
+        max-width: 100px;
+      }
 
-  #image-container img {
-    max-width: 100px;
-  }
+      #image-container p {
+        font-size: 14px;
+      }
 
-  #image-container p {
-    font-size: 14px;
-  }
-}
+      #print-button {
+        width: 100%;
+      }
+    }
 
+    /* STAMPA */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
 
+      #image-container, #image-container * {
+        visibility: visible;
+      }
+
+      #image-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -193,124 +219,105 @@ body {
       <div id="image-container">
         <p>L'immagine apparirà qui</p>
       </div>
+      <button id="print-button" style="display: none;">Stampa simboli</button>
     </div>
   </div>
 
   <script>
-    const stopwords = [
-      "il", "lo", "la", "i", "gli", "le",
-    ];
-
-    // Lista completa di coniugazioni comuni da mappare
+    const stopwords = ["il", "lo", "la", "i", "gli", "le"];
+  
     const verbMap = {
-      // ESSERE
       "sono": "essere", "sei": "essere", "è": "essere", "siamo": "essere", "siete": "essere", "erano": "essere",
       "ero": "essere", "eri": "essere", "era": "essere", "eravamo": "essere", "eravate": "essere",
       "sarò": "essere", "sarai": "essere", "sarà": "essere", "saremo": "essere", "sarete": "essere", "saranno": "essere",
       "fui": "essere", "fosti": "essere", "fu": "essere", "fummo": "essere", "foste": "essere", "furono": "essere",
-
-      // AVERE
       "ho": "avere", "hai": "avere", "ha": "avere", "abbiamo": "avere", "avete": "avere", "hanno": "avere",
       "avevo": "avere", "avevi": "avere", "aveva": "avere", "avevamo": "avere", "avevate": "avere", "avevano": "avere",
       "avrò": "avere", "avrai": "avere", "avrà": "avere", "avremo": "avere", "avrete": "avere", "avranno": "avere",
       "ebbi": "avere", "avesti": "avere", "ebbe": "avere", "avemmo": "avere", "aveste": "avere", "ebbero": "avere"
     };
-
-    // Normalizza una parola: toglie stopword, riconosce verbi, semplifica participi
+  
     function normalizeWord(word) {
-  if (stopwords.includes(word)) return null;
-  if (verbMap[word]) return verbMap[word];
-
-  // Partecipi passati → verbi all'infinito
-  if (word.match(/ato$|uto$|ito$/)) {
-    return word.replace(/ato$|uto$|ito$/, "are");
-  }
-
-  // Futuro semplice (es. cucinerò → cucinare, berrai → bere)
-  if (word.match(/(erò|erai|erà|eremo|erete|eranno)$/)) {
-    return word.replace(/erò|erai|erà|eremo|erete|eranno/, "are");
-  }
-  if (word.match(/(irò|irai|irà|iremo|irete|iranno)$/)) {
-    return word.replace(/irò|irai|irà|iremo|irete|iranno/, "ire");
-  }
-
-  // Verbi irregolari nel futuro (aggiungiamo alcuni manualmente)
-  const futureIrregulars = {
-    "berrò": "bere",
-    "berrai": "bere",
-    "berrà": "bere",
-    "berremo": "bere",
-    "berrete": "bere",
-    "berranno": "bere",
-    "andrò": "andare",
-    "andrai": "andare",
-    "andrà": "andare",
-    "faremo": "fare",
-    "farò": "fare",
-    "farai": "fare",
-    "darò": "dare",
-    "dirò": "dire",
-    "verrò": "venire",
-    "vedrò": "vedere",
-    "potrò": "potere",
-    "vorrò": "volere",
-    "dovrò": "dovere",
-    "sarò": "essere",
-    "avrò": "avere"
-  };
-
-  if (futureIrregulars[word]) return futureIrregulars[word];
-
-  return word;
-}
-
+      if (stopwords.includes(word)) return null;
+      if (verbMap[word]) return verbMap[word];
+  
+      if (word.match(/ato$|uto$|ito$/)) {
+        return word.replace(/ato$|uto$|ito$/, "are");
+      }
+  
+      if (word.match(/(erò|erai|erà|eremo|erete|eranno)$/)) {
+        return word.replace(/erò|erai|erà|eremo|erete|eranno/, "are");
+      }
+  
+      if (word.match(/(irò|irai|irà|iremo|irete|iranno)$/)) {
+        return word.replace(/irò|irai|irà|iremo|irete|iranno/, "ire");
+      }
+  
+      const futureIrregulars = {
+        "berrò": "bere", "berrai": "bere", "berrà": "bere", "berremo": "bere", "berrete": "bere", "berranno": "bere",
+        "andrò": "andare", "andrai": "andare", "andrà": "andare", "faremo": "fare", "farò": "fare", "farai": "fare",
+        "darò": "dare", "dirò": "dire", "verrò": "venire", "vedrò": "vedere", "potrò": "potere",
+        "vorrò": "volere", "dovrò": "dovere", "sarò": "essere", "avrò": "avere"
+      };
+  
+      if (futureIrregulars[word]) return futureIrregulars[word];
+      return word;
+    }
+  
     async function fetchSymbols() {
-    const input = document.getElementById("wordInput").value.toLowerCase().trim();
-    const container = document.getElementById("image-container");
-    container.innerHTML = "<p>Caricamento...</p>";
-
-    // Rimuove punteggiatura e tokenizza
-    const rawTokens = input.replace(/[.,;!?]/g, '').split(/\s+/);
-    const tokens = rawTokens
-        .map(normalizeWord)
-        .filter(Boolean); // rimuove null
-
-    if (tokens.length === 0) {
+      const input = document.getElementById("wordInput").value.toLowerCase().trim();
+      const container = document.getElementById("image-container");
+      const printButton = document.getElementById("print-button");
+  
+      container.innerHTML = "<p>Caricamento...</p>";
+      printButton.style.display = "none";
+  
+      const rawTokens = input.replace(/[.,;!?]/g, '').split(/\s+/);
+      const tokens = rawTokens.map(normalizeWord).filter(Boolean);
+  
+      if (tokens.length === 0) {
         container.innerHTML = "<p>Nessuna parola utile trovata.</p>";
         return;
-    }
-
-    container.innerHTML = "";
-
-    for (const word of tokens) {
+      }
+  
+      container.innerHTML = "";
+      let completed = 0;
+  
+      for (const word of tokens) {
         const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.arasaac.org/api/pictograms/it/search/${word}`)}`;
-
+  
         try {
-        const response = await fetch(url);
-        const data = await response.json();
-        const parsed = JSON.parse(data.contents);
-
-        if (parsed.length > 0) {
+          const response = await fetch(url);
+          const data = await response.json();
+          const parsed = JSON.parse(data.contents);
+  
+          const symbolBlock = document.createElement("div");
+          symbolBlock.className = "symbol-block";
+  
+          if (parsed.length > 0) {
             const pictogramId = parsed[0]._id;
             const imageUrl = `https://static.arasaac.org/pictograms/${pictogramId}/${pictogramId}_500.png`;
-
-            const symbolBlock = document.createElement("div");
-            symbolBlock.className = "symbol-block";
             symbolBlock.innerHTML = `<img src="${imageUrl}" alt="${word}"><p>${word}</p>`;
-            container.appendChild(symbolBlock);
-        } else {
-            const noResult = document.createElement("div");
-            noResult.className = "symbol-block";
-            noResult.innerHTML = `<p>Nessun simbolo per "${word}"</p>`;
-            container.appendChild(noResult);
-        }
+          } else {
+            symbolBlock.innerHTML = `<p>Nessun simbolo per "${word}"</p>`;
+          }
+  
+          container.appendChild(symbolBlock);
         } catch (error) {
-        console.error(error);
-        container.innerHTML += `<p>Errore nel caricamento per "${word}".</p>`;
+          console.error(error);
+          container.innerHTML += `<p>Errore nel caricamento per "${word}".</p>`;
         }
+  
+        completed++;
+        if (completed === tokens.length) {
+          printButton.style.display = "block";
+  
+          // AGGIUNTA: stampa automatica al termine
+          printButton.onclick = () => window.print();
+        }
+      }
     }
-    }
-
   </script>
+  
 </body>
 </html>
