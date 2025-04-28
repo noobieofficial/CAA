@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="it>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, inital-scale=1.0">
+  <link rel="icon" href="caa.png" type="image/png"/>
+  <title>CAA</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6fb;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      display: flex;
+      flex-direction: row;
+      max-width: 1000px;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .left {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .left h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #007bff;
+        }
+        .left p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .left input {
+            padding: 14px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .left input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .left button {
+            padding: 14px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .left button:hover {
+            background-color: #0056b3;
+        }
+        .right {
+            flex: 1;
+            background-color: #f0f4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #image-container {
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        #image-container img {
+            max-width: 120px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        #image-container p {
+            margin-top: 8px;
+            font-size: 16px;
+            color: #444;
+        }
+        .symbol-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #print-button {
+            display: none;
+            margin-top: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        #print-button:hover {
+            background-color: #0056b3;
+        }
+        /* MOBILE */
+        @media (max-width: 768px) {
+            body { padding: 0; }
+            .container {
+                flex-direction: column;
+                border-radius: 0;
+                box-shadow: none;
+                width: 100%;
+            }
+            .left {
+                padding: 24px 20px;
+                background: #ffffff;
+            }
+            .left h1 { font-size: 26px; text-align: center; }
+            .left p { font-size: 16px; text-align: center; }
+            .left input { padding: 12px; font-size: 16px; }
+            .left button { padding: 12px; width: 100%; }
+            .right { padding: 20px 16px 40px; }
+            #image-container img { max-width: 100px; }
+            #image-container p { font-size: 14px; }
+            #print-button { width: 100%; }
+        }
+        /* STAMPA */
+        @media print {
+            body * { visibility: hidden; }
+            #image-container, #image-container * {
+                visibility: visible;
+            }
+            #image-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <h1>Visualizzatore CAA</h1>
+            <p>Inserisci una frase (in italiano):</p>
+            <input type="text" id="wordInput" placeholder="Es. il cane mangerà">
+            <button onclick="fetchSymbols()">Mostra simboli</button>
+        </div>
+        <div class="right">
+            <div id="image-container">
+                <p>L'immagine apparirà qui</p>
+            </div>
+            <button id="print-button" style="display: none;">Stampa simboli</button>
+        </div>
+    </div>
+
+    <div id="cookie-banner" style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #333;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        z-index: 1000;
+        font-size: 16px;
+        display: none;">
+        Questo sito utilizza cookie per salvare la tua ultima frase.
+        <button onclick="acceptCookies()" style="margin-left: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Accetta
+        </button>
+    </div>
+
+   <script>
+        const stopwords = ["il", "lo", "la", "i", "gli", "le", "un", "uno", "una"];
+
+        const verbMap = {
+            "sono": "essere", "sei": "essere", "è": "essere", "siamo": "essere", "siete": "essere", "sono": "essere",
+            "ero": "essere", "eri": "essere", "era": "essere", "eravamo": "essere", "eravate": "essere", "erano": "essere",
+            "sarò": "essere", "sarai": "essere", "sarà": "essere", "saremo": "essere", "sarete": "essere", "saranno": "essere",
+            "ho": "avere", "hai": "avere", "ha": "avere", "abbiamo": "avere", "avete": "avere", "hanno": "avere",
+            "avevo": "avere", "avevi": "avere", "aveva": "avere", "avevamo": "avere", "avevate": "avere", "avevano": "avere",
+            "avrò": "avere", "avrai": "avere", "avrà": "avere", "avremo": "avere", "avrete": "avere", "avranno": "avere",
+            "andavo": "andare", "andavi": "andare", "andava": "andare", "andavamo": "andare", "andavate": "andare", "andavano": "andare",
+            "vado": "andare", "vai": "andare", "va": "andare", "andiamo": "andare", "andate": "andare", "vanno": "andare",
+            "andrò": "andare", "andrai": "andare", "andrà": "andare", "andremo": "andare", "andrete": "andrete", "andranno": "andare",
+            "mangiato": "mangiare", "bevuto": "bere", "dormito": "dormire", // Aggiungi altri verbi passati se necessario
+            "mangerò": "mangiare", "berrò": "bere", "dormirò": "dormire" // Esempi di futuro semplice
+        };
+
+        async function normalizeWord(word) {
+            if (stopwords.includes(word)) return null;
+            if (verbMap[word]) return verbMap[word];
+
+            // Verifica se la parola termina in "ato", "ito" o "uto" (potrebbe essere un participio passato)
+            if (word.endsWith("ato") || word.endsWith("ito") || word.endsWith("uto")) {
+                // Potrebbe essere utile fare un ulteriore controllo o normalizzazione qui
+                // In questo esempio, lo trattiamo come la forma base (rimuovendo la desinenza)
+                // Questo è un approccio semplificato e potrebbe non essere accurato per tutti i verbi.
+                const base = word.slice(0, -3);
+                // Qui potresti voler fare una ricerca più sofisticata per trovare la forma base corretta
+                // Per ora, restituiamo la parola troncata.
+                return base;
+            }
+
+            // altrimenti restituisci la parola stessa
+            return word;
+        }
+
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+        }
+
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        }
+
+        function acceptCookies() {
+            setCookie('cookieConsent', 'true', 365);
+            document.getElementById('cookie-banner').style.display = 'none';
+        }
+
+        window.onload = function() {
+            const consentGiven = getCookie('cookieConsent') === 'true';
+
+            if (!consentGiven) {
+                document.getElementById('cookie-banner').style.display = 'block';
+            }
+
+            if (consentGiven) {
+                const lastPhrase = getCookie('lastPhrase');
+                if (lastPhrase) {
+                    document.getElementById('wordInput').value = lastPhrase;
+                }
+            }
+        };
+
+        async function fetchSymbols() {
+            const inputField = document.getElementById("wordInput");
+            const input = inputField.value.toLowerCase().trim();
+            const container = document.getElementById("image-container");
+            const printButton = document.getElementById("print-button");
+
+            container.innerHTML = "<p>Caricamento...</p>";
+            printButton.style.display = "none";
+
+            const consentGiven = getCookie('cookieConsent') === 'true';
+            if (consentGiven) {
+                setCookie('lastPhrase', inputField.value, 7);
+            }
+
+            const rawTokens = input.replace(/[.,;!?]/g, '').split(/\s+/);
+            const tokensPromises = rawTokens.map(normalizeWord);
+            const tokens = (await Promise.all(tokensPromises)).filter(Boolean);
+
+            if (tokens.length === 0) {
+                container.innerHTML = "<p>Nessuna parola utile trovata.</p>";
+                return;
+            }
+
+            container.innerHTML = "";
+            let completed = 0;
+
+            for (const word of tokens) {
+                const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.arasaac.org/api/pictograms/it/search/${word}`)}`;
+
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    const parsed = JSON.parse(data.contents);
+
+                    const symbolBlock = document.createElement("div");
+                    symbolBlock.className = "symbol-block";
+
+                    if (parsed.length > 0) {
+                        const pictogramId = parsed[0]._id;
+                        const imageUrl = `https://static.arasaac.org/pictograms/${pictogramId}/${pictogramId}_500.png`;
+                        symbolBlock.innerHTML = `<img src="${imageUrl}" alt="${word}"><p>${word}</p>`;
+                    } else {
+                        symbolBlock.innerHTML = `<p>Nessun simbolo per "${word}"</p>`;
+                    }
+
+                    container.appendChild(symbolBlock);
+                } catch (error) {
+                    console.error(error);
+                    container.innerHTML += `<p>Errore nel caricamento per "${word}".</p>`;
+                }
+
+                completed++;
+                if (completed === tokens.length) {
+                    printButton.style.display = "block";
+                    printButton.onclick = () => window.print();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
