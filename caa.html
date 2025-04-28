@@ -158,7 +158,7 @@
         <div class="left">
             <h1>Visualizzatore CAA</h1>
             <p>Inserisci una frase (in italiano):</p>
-            <input type="text" id="wordInput" placeholder="Es. il cane mangerà">
+            <input type="text" id="wordInput" placeholder="Es. il cane è contento">
             <button onclick="fetchSymbols()">Mostra simboli</button>
         </div>
         <div class="right">
@@ -191,7 +191,7 @@
         const stopwords = ["il", "lo", "la", "i", "gli", "le", "un", "uno", "una"];
 
         const verbMap = {
-            "sono": "essere", "sei": "essere", "è": "essere", "siamo": "essere", "siete": "essere", "sono": "essere",
+            "sono": "essere", "sei": "essere", "é":"essere", "è": "essere", "siamo": "essere", "siete": "essere", "sono": "essere",
             "ero": "essere", "eri": "essere", "era": "essere", "eravamo": "essere", "eravate": "essere", "erano": "essere",
             "sarò": "essere", "sarai": "essere", "sarà": "essere", "saremo": "essere", "sarete": "essere", "saranno": "essere",
             "ho": "avere", "hai": "avere", "ha": "avere", "abbiamo": "avere", "avete": "avere", "hanno": "avere",
