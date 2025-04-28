@@ -223,6 +223,24 @@ body {
       <button id="print-button" style="display: none;">Stampa simboli</button>
     </div>
   </div>
+  <div id="cookie-banner" style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #333;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        z-index: 1000;
+        font-size: 16px;
+        display: none;">
+        Questo sito utilizza cookie per salvare la tua ultima frase. 
+        <button onclick="acceptCookies()" style="margin-left: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Accetta
+        </button>
+    </div>
+
 
   <script>
     const stopwords = ["il", "lo", "la", "i", "gli", "le"];
@@ -265,59 +283,95 @@ body {
       return word;
     }
   
-    async function fetchSymbols() {
-      const input = document.getElementById("wordInput").value.toLowerCase().trim();
-      const container = document.getElementById("image-container");
-      const printButton = document.getElementById("print-button");
-  
-      container.innerHTML = "<p>Caricamento...</p>";
-      printButton.style.display = "none";
-  
-      const rawTokens = input.replace(/[.,;!?]/g, '').split(/\s+/);
-      const tokens = rawTokens.map(normalizeWord).filter(Boolean);
-  
-      if (tokens.length === 0) {
-        container.innerHTML = "<p>Nessuna parola utile trovata.</p>";
-        return;
-      }
-  
-      container.innerHTML = "";
-      let completed = 0;
-  
-      for (const word of tokens) {
-        const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.arasaac.org/api/pictograms/it/search/${word}`)}`;
-  
-        try {
-          const response = await fetch(url);
-          const data = await response.json();
-          const parsed = JSON.parse(data.contents);
-  
-          const symbolBlock = document.createElement("div");
-          symbolBlock.className = "symbol-block";
-  
-          if (parsed.length > 0) {
-            const pictogramId = parsed[0]._id;
-            const imageUrl = `https://static.arasaac.org/pictograms/${pictogramId}/${pictogramId}_500.png`;
-            symbolBlock.innerHTML = `<img src="${imageUrl}" alt="${word}"><p>${word}</p>`;
-          } else {
-            symbolBlock.innerHTML = `<p>Nessun simbolo per "${word}"</p>`;
-          }
-  
-          container.appendChild(symbolBlock);
-        } catch (error) {
-          console.error(error);
-          container.innerHTML += `<p>Errore nel caricamento per "${word}".</p>`;
-        }
-  
-        completed++;
-        if (completed === tokens.length) {
-          printButton.style.display = "block";
-  
-          // AGGIUNTA: stampa automatica al termine
-          printButton.onclick = () => window.print();
-        }
+    function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+  }
+
+  function getCookie(name) {
+    return document.cookie.split('; ').reduce((r, v) => {
+      const parts = v.split('=');
+      return parts[0] === name ? decodeURIComponent(parts[1]) : r
+    }, '');
+  }
+
+  function acceptCookies() {
+    setCookie('cookieConsent', 'true', 365); // Ricorda il consenso per 1 anno
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+
+  window.onload = function() {
+    const consentGiven = getCookie('cookieConsent') === 'true';
+
+    if (!consentGiven) {
+      document.getElementById('cookie-banner').style.display = 'block';
+    }
+
+    if (consentGiven) {
+      const lastPhrase = getCookie('lastPhrase');
+      if (lastPhrase) {
+        document.getElementById('wordInput').value = lastPhrase;
       }
     }
+  };
+
+  async function fetchSymbols() {
+    const inputField = document.getElementById("wordInput");
+    const input = inputField.value.toLowerCase().trim();
+    const container = document.getElementById("image-container");
+    const printButton = document.getElementById("print-button");
+
+    container.innerHTML = "<p>Caricamento...</p>";
+    printButton.style.display = "none";
+
+    const consentGiven = getCookie('cookieConsent') === 'true';
+    if (consentGiven) {
+      setCookie('lastPhrase', inputField.value, 7); // Salva solo se acconsentito
+    }
+
+    const rawTokens = input.replace(/[.,;!?]/g, '').split(/\s+/);
+    const tokens = rawTokens.map(normalizeWord).filter(Boolean);
+
+    if (tokens.length === 0) {
+      container.innerHTML = "<p>Nessuna parola utile trovata.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+    let completed = 0;
+
+    for (const word of tokens) {
+      const url = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://api.arasaac.org/api/pictograms/it/search/${word}`)}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const parsed = JSON.parse(data.contents);
+
+        const symbolBlock = document.createElement("div");
+        symbolBlock.className = "symbol-block";
+
+        if (parsed.length > 0) {
+          const pictogramId = parsed[0]._id;
+          const imageUrl = `https://static.arasaac.org/pictograms/${pictogramId}/${pictogramId}_500.png`;
+          symbolBlock.innerHTML = `<img src="${imageUrl}" alt="${word}"><p>${word}</p>`;
+        } else {
+          symbolBlock.innerHTML = `<p>Nessun simbolo per "${word}"</p>`;
+        }
+
+        container.appendChild(symbolBlock);
+      } catch (error) {
+        console.error(error);
+        container.innerHTML += `<p>Errore nel caricamento per "${word}".</p>`;
+      }
+
+      completed++;
+      if (completed === tokens.length) {
+        printButton.style.display = "block";
+        printButton.onclick = () => window.print();
+      }
+    }
+  }
   </script>
   
 </body>
